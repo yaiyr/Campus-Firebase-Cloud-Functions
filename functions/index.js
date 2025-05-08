@@ -39,4 +39,8 @@ exports.getAllStaffVerification = getAllStaffVerification;
 // Example:
 // exports.anotherFunction = require('./path/to/file').functionName;
 
+exports.getAdminEnrollmentStudentList = require("./src/triggers/http/getAdminEnrollmentStudentList").getAdminEnrollmentStudentList;
+exports.getAdminEnrollmentDropdownOptions = require("./src/triggers/http/getAdminEnrollmentDropdownOptions").getAdminEnrollmentDropdownOptions;
+
+
 console.log('Firebase Functions initialized');
