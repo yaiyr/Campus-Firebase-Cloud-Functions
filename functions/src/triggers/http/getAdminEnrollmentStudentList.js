@@ -16,7 +16,7 @@ exports.getAdminEnrollmentStudentList = onRequest(async (req, res) => {
     return res.status(204).send("");
   }
   try {
-    const { department, year_level, section, search } = req.query;
+    const { department, year_level, section, term, academic_year, search } = req.query;
 
     let query = `
   SELECT
@@ -65,6 +65,16 @@ exports.getAdminEnrollmentStudentList = onRequest(async (req, res) => {
           CAST(d.department_name AS TEXT) ILIKE $${i}
         )`;
     }
+
+    if (term) {
+      values.push(term);
+      query += ` AND e.acad_term = $${values.length}`;
+    }
+    
+    if (academic_year) {
+      values.push(academic_year);
+      query += ` AND e.acad_year = $${values.length}`;
+    }    
 
     const result = await pool.query(query, values);
     return res.status(200).json(result.rows);
