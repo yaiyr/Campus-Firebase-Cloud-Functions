@@ -26,7 +26,7 @@ exports.getAdminEnrollmentDropdownOptions = onRequest(async (req, res) => {
 
     console.log("Fetching sections with department filter:", departmentFilter);
 
-    const [deptRes, yearRes, sectionRes, termRes, acadYearRes] = await Promise.all([
+    const [deptRes, yearRes, sectionRes, termRes, acadYearRes, statusRes] = await Promise.all([
       pool.query(
         'SELECT DISTINCT department_name FROM "Department" ORDER BY department_name'
       ),
@@ -38,6 +38,9 @@ exports.getAdminEnrollmentDropdownOptions = onRequest(async (req, res) => {
       pool.query(
         'SELECT DISTINCT acad_year FROM "Enrollment" ORDER BY acad_year'
       ),
+      pool.query(
+        'SELECT DISTINCT enrollment_status FROM "Enrollment" ORDER BY enrollment_status'
+      ),
     ]);
 
     res.status(200).json({
@@ -46,6 +49,7 @@ exports.getAdminEnrollmentDropdownOptions = onRequest(async (req, res) => {
       year_levels: yearRes.rows,
       terms: termRes.rows,
       academic_years: acadYearRes.rows,
+      status: statusRes.rows,
     });
   } catch (err) {
     console.error("Dropdown Fetch Error:", err);

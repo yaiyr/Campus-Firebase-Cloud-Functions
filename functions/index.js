@@ -43,5 +43,6 @@ exports.getAllStaffVerification = getAllStaffVerification;
 exports.getAdminEnrollmentStudentList = require("./src/triggers/http/getAdminEnrollmentStudentList").getAdminEnrollmentStudentList;
 exports.getAdminEnrollmentDropdownOptions = require("./src/triggers/http/getAdminEnrollmentDropdownOptions").getAdminEnrollmentDropdownOptions;
 exports.getStudentProfileById = require("./src/triggers/http/getStudentProfileById").getStudentProfileById;
+exports.getEnrollmentStatusByStudentNumber = require("./src/triggers/http/getEnrollmentStatusByStudentNumber").getEnrollmentStatusByStudentNumber;
 
 console.log('Firebase Functions initialized');
