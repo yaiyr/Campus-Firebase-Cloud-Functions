@@ -24,6 +24,7 @@ exports.getNotEnrolledStudentList = onRequest(async (req, res) => {
         up.first_name,
         up.middle_name,
         e.enrollment_status,
+        sec.section_id,
         sec.section_desc,
         sec.year_level,
         d.department_name
