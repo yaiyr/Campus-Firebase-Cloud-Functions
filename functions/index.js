@@ -47,5 +47,7 @@ exports.getEnrollmentStatusByStudentNumber = require("./src/triggers/http/getEnr
 exports.getNotEnrolledStudentList = require("./src/triggers/http/getNotEnrolledStudentList").getNotEnrolledStudentList;
 exports.getCourseAdvisingProfile = require("./src/triggers/http/getCourseAdvisingProfile").getCourseAdvisingProfile;
 exports.getSectionSchedule = require("./src/triggers/http/getSectionSchedule").getSectionSchedule;
+exports.adviseStudent = require("./src/triggers/http/adviseStudent").adviseStudent;
+exports.getSectionDropdownOptions = require("./src/triggers/http/getSectionDropdownOptions").getSectionDropdownOptions;
 
 console.log('Firebase Functions initialized');
