@@ -1,91 +1,120 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { Pool } = require("pg");
+const { Client } = require("pg");
 
-const pool = new Pool({
-  connectionString:
-    "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
-  ssl: { rejectUnauthorized: false },
-});
+exports.getAdminEnrollmentStudentList = onRequest(
+  {
+    region: "asia-southeast1",
+    cors: true,
+  },
+  async (req, res) => {
+    const db = new Client({
+      connectionString:
+        "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
+      ssl: { rejectUnauthorized: false },
+    });
 
-exports.getAdminEnrollmentStudentList = onRequest(async (req, res) => {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, POST");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
+    try {
+      await db.connect();
 
-  if (req.method === "OPTIONS") {
-    return res.status(204).send("");
+      res.set("Access-Control-Allow-Origin", "*");
+      res.set("Access-Control-Allow-Methods", "GET");
+      res.set("Access-Control-Allow-Headers", "Content-Type");
+
+      const {
+        department,
+        year_level,
+        section,
+        term,
+        academic_year,
+        enrollment_status,
+        search,
+      } = req.query;
+
+      const values = [];
+      const conditions = [];
+
+      if (department) {
+        values.push(department);
+        conditions.push(`d.department_name ILIKE $${values.length}`);
+      }
+
+      if (year_level) {
+        values.push(year_level);
+        conditions.push(`sec.year_level = $${values.length}`);
+      }
+
+      if (section) {
+        values.push(section);
+        conditions.push(`sec.section_desc ILIKE $${values.length}`);
+      }
+
+      if (term) {
+        values.push(term);
+        conditions.push(`e.acad_term = $${values.length}`);
+      }
+
+      if (academic_year) {
+        values.push(academic_year);
+        conditions.push(`e.acad_year = $${values.length}`);
+      }
+
+      if (enrollment_status) {
+        values.push(enrollment_status);
+        conditions.push(`e.enrollment_status = $${values.length}`);
+      }
+
+      if (search) {
+        values.push(`%${search}%`);
+        conditions.push(`(
+    s.student_number::text ILIKE $${values.length} OR
+    up.last_name ILIKE $${values.length} OR
+    up.first_name ILIKE $${values.length}
+  )`);
+      }
+
+      // Exclude 1st Year unless enrolled in 2nd Term
+      conditions.push(`
+  (
+    sec.year_level != 1
+    OR
+    (sec.year_level = 1 AND COALESCE(e.acad_term, '') = '2nd Term')
+  )
+`);
+
+      const whereClause =
+        conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+      const query = `
+        SELECT
+          s.student_number,
+          up.last_name,
+          up.first_name,
+          up.middle_name,
+          e.enrollment_status,
+          sec.section_desc,
+          sec.year_level,
+          d.department_name
+        FROM "Student" s
+        JOIN "User" u ON s.user_id = u.user_id
+        JOIN "User_Profile" up ON u.user_id = up.user_id
+        LEFT JOIN "Section" sec ON s.section_id = sec.section_id
+        LEFT JOIN "Department" d ON sec.department_id = d.department_id
+        LEFT JOIN "Enrollment" e ON s.student_id = e.student_id
+        ${whereClause}
+        ORDER BY up.last_name, up.first_name
+      `;
+
+      const result = await db.query(query, values);
+
+      res.status(200).json(result.rows);
+    } catch (err) {
+      console.error("❌ Enrollment Fetch Error:", err.stack);
+      res.status(500).json({
+        error: "Internal Server Error",
+        message: err.message,
+      });
+    } finally {
+      await db.end();
+    }
   }
-  try {
-    const { department, year_level, section, term, academic_year, enrollment_status, search } = req.query;
-
-    let query = `
-  SELECT
-    s.student_number,
-    up.last_name,
-    up.first_name,
-    up.middle_name,
-    e.enrollment_status,
-    sec.section_desc,
-    sec.year_level,
-    d.department_name
-  FROM "Student" s
-  JOIN "User" u ON s.user_id = u.user_id
-  JOIN "User_Profile" up ON u.user_id = up.user_id
-  LEFT JOIN "Section" sec ON s.section_id = sec.section_id
-  LEFT JOIN "Department" d ON sec.department_id = d.department_id
-  LEFT JOIN "Enrollment" e ON s.student_id = e.student_id
-  WHERE 1=1
-`;
-    const values = [];
-
-    if (department) {
-      values.push(department);
-      query += ` AND d.department_name = $${values.length}`;
-    }
-
-    if (year_level) {
-      values.push(year_level);
-      query += ` AND sec.year_level = $${values.length}`;
-    }
-
-    if (section) {
-      values.push(section);
-      query += ` AND sec.section_desc = $${values.length}`;
-    }
-
-    if (search) {
-      values.push(`%${search}%`);
-      const i = values.length;
-      query += ` AND (
-          up.first_name ILIKE $${i} OR
-          up.middle_name ILIKE $${i} OR
-          up.last_name ILIKE $${i} OR
-          CAST(s.student_number AS TEXT) ILIKE $${i} OR
-          CAST(sec.section_desc AS TEXT) ILIKE $${i} OR
-          CAST(d.department_name AS TEXT) ILIKE $${i}
-        )`;
-    }
-
-    if (term) {
-      values.push(term);
-      query += ` AND e.acad_term = $${values.length}`;
-    }
-    
-    if (academic_year) {
-      values.push(academic_year);
-      query += ` AND e.acad_year = $${values.length}`;
-    }
-    
-    if (enrollment_status) {
-      values.push(enrollment_status);
-      query += ` AND e.enrollment_status = $${values.length}`;
-    }
-
-    const result = await pool.query(query, values);
-    return res.status(200).json(result.rows);
-  } catch (err) {
-    console.error("ERROR:", err.message);
-    console.error("STACK:", err.stack);
-    return res.status(500).json({ error: err.message });
-  }
-});
+);

@@ -1,14 +1,17 @@
 // ✅ Cloud Function: getCourseAdvisingProfile.js
 const { onRequest } = require("firebase-functions/v2/https");
-const { Pool } = require("pg");
+const { Client } = require("pg");
 
-const pool = new Pool({
-  connectionString:
-    "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
-  ssl: { rejectUnauthorized: false },
-});
+exports.getCourseAdvisingProfile = onRequest({
+    region: "asia-southeast1",
+    cors: true,
+  },async (req, res) => {
+  const pool = new Client({
+    connectionString: "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
+    ssl: { rejectUnauthorized: false },
+  });
+  await pool.connect();
 
-exports.getCourseAdvisingProfile = onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET");
   res.set("Access-Control-Allow-Headers", "Content-Type");
@@ -47,11 +50,9 @@ LIMIT 1;
     const result = await pool.query(query, [studentNumber]);
 
     if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: "Student not found or not in 'Not Yet Enrolled' status",
-        });
+      return res.status(404).json({
+        error: "Student not found or not in 'Not Yet Enrolled' status",
+      });
     }
 
     const row = result.rows[0];

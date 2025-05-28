@@ -1,13 +1,16 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { Pool } = require("pg");
+const { Client } = require("pg");
 
-const pool = new Pool({
-  connectionString:
-    "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
-  ssl: { rejectUnauthorized: false },
-});
+exports.getNotEnrolledStudentList = onRequest({
+    region: "asia-southeast1",
+    cors: true,
+  },async (req, res) => {
+  const pool = new Client({
+    connectionString: "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
+    ssl: { rejectUnauthorized: false },
+  });
+  await pool.connect();
 
-exports.getNotEnrolledStudentList = onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET, POST");
   res.set("Access-Control-Allow-Headers", "Content-Type");
@@ -15,7 +18,15 @@ exports.getNotEnrolledStudentList = onRequest(async (req, res) => {
   if (req.method === "OPTIONS") return res.status(204).send("");
 
   try {
-    const { department, year_level, section, term, academic_year, search } = req.query;
+    const {
+      department,
+      year_level,
+      section,
+      term,
+      academic_year,
+      search,
+      student_standing,
+    } = req.query;
 
     let query = `
       SELECT
@@ -24,9 +35,11 @@ exports.getNotEnrolledStudentList = onRequest(async (req, res) => {
         up.first_name,
         up.middle_name,
         e.enrollment_status,
+        e.enrollment_type,
         sec.section_id,
         sec.section_desc,
         sec.year_level,
+        e.student_standing,
         d.department_name
       FROM "Student" s
       JOIN "User" u ON s.user_id = u.user_id
@@ -75,6 +88,11 @@ exports.getNotEnrolledStudentList = onRequest(async (req, res) => {
     if (academic_year) {
       values.push(academic_year);
       query += ` AND e.acad_year = $${values.length}`;
+    }
+
+    if (student_standing) {
+      values.push(student_standing);
+      query += ` AND e.student_standing = $${values.length}`;
     }
 
     const result = await pool.query(query, values);

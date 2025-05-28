@@ -1,13 +1,16 @@
 const { onRequest } = require("firebase-functions/v2/https");
-const { Pool } = require("pg");
+const { Client } = require("pg");
 
-const pool = new Pool({
-  connectionString:
-    "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
-  ssl: { rejectUnauthorized: false },
-});
+exports.getStudentProfileById = onRequest({
+    region: "asia-southeast1",
+    cors: true,
+  },async (req, res) => {
+  const pool = new Client({
+    connectionString: "postgresql://neondb_owner:npg_mQOGqHwl95Cd@ep-old-wind-a1kkjbku-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require",
+    ssl: { rejectUnauthorized: false },
+  });
+  await pool.connect();
 
-exports.getStudentProfileById = onRequest(async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET");
 
