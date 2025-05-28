@@ -40,6 +40,7 @@ exports.getAdminEnrollmentDropdownOptions = onRequest(
         acadYearRes,
         statusRes,
         standingRes,
+        requestTypeRes
       ] = await Promise.all([
         db.query('SELECT DISTINCT department_name FROM "Department" ORDER BY department_name'),
         db.query('SELECT DISTINCT year_level FROM "Section" ORDER BY year_level'),
@@ -48,6 +49,7 @@ exports.getAdminEnrollmentDropdownOptions = onRequest(
         db.query('SELECT DISTINCT acad_year FROM "Enrollment" ORDER BY acad_year'),
         db.query('SELECT DISTINCT enrollment_status FROM "Enrollment" ORDER BY enrollment_status'),
         db.query('SELECT DISTINCT student_standing FROM "Enrollment" WHERE student_standing IS NOT NULL ORDER BY student_standing'),
+        db.query('SELECT DISTINCT request_type FROM "Student_Course_Requests" WHERE request_type IS NOT NULL ORDER BY request_type'),
       ]);
 
       res.status(200).json({
@@ -58,6 +60,7 @@ exports.getAdminEnrollmentDropdownOptions = onRequest(
         academic_years: acadYearRes.rows,
         status: statusRes.rows,
         standing: standingRes.rows,
+        request_types: requestTypeRes.rows,
       });
     } catch (err) {
       console.error("❌ Dropdown Fetch Error:", err.stack);

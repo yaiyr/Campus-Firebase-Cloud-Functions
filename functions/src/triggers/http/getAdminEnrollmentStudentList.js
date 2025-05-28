@@ -71,16 +71,7 @@ exports.getAdminEnrollmentStudentList = onRequest(
     up.first_name ILIKE $${values.length}
   )`);
       }
-
-      // Exclude 1st Year unless enrolled in 2nd Term
-      conditions.push(`
-  (
-    sec.year_level != 1
-    OR
-    (sec.year_level = 1 AND COALESCE(e.acad_term, '') = '2nd Term')
-  )
-`);
-
+      
       const whereClause =
         conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 

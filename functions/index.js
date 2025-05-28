@@ -9,5 +9,7 @@ exports.getCourseAdvisingProfile = require("./src/triggers/http/getCourseAdvisin
 exports.getSectionSchedule = require("./src/triggers/http/getSectionSchedule").getSectionSchedule;
 exports.adviseStudent = require("./src/triggers/http/adviseStudent").adviseStudent;
 exports.getSectionDropdownOptions = require("./src/triggers/http/getSectionDropdownOptions").getSectionDropdownOptions;
+exports.getStudentCourseRequests = require("./src/triggers/http/getStudentCourseRequests").getStudentCourseRequests;
+exports.handleRequestDecision = require("./src/triggers/http/handleRequestDecision").handleRequestDecision;
 
 console.log('Firebase Functions initialized');
